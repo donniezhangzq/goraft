@@ -1,12 +1,13 @@
 package goraft
 
 import (
-	"donniezhangzq/goraft/constant"
 	"donniezhangzq/goraft/log"
 	"donniezhangzq/goraft/storage"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"net"
 	"net/http"
+	"net/rpc"
 )
 
 type Server interface {
@@ -17,7 +18,7 @@ type Server interface {
 type Goraft struct {
 	Id         string
 	ClientPort int
-	RpcPort int
+	RpcPort    int
 	HttpPrefix string
 	election   *Election
 	replation  *Replation
@@ -26,33 +27,29 @@ type Goraft struct {
 	logger     *log.Logger
 }
 
-func NewGoraft(options *Options, logger *log.Logger) (*Goraft, error) {
-	election, err := NewElection(options, logger)
-	if err != nil {
-		return nil, err
-	}
-	storage := storage.NewStorage(election)
-	replation := NewReplation(options, logger)
+func NewGoraft(options *Options, logger *log.Logger, rpcClientCache *RpcClientCache) *Goraft {
+	election := NewElection(options, logger, rpcClientCache)
+	s := storage.NewStorage(election)
+	replation := NewReplation(options, logger, rpcClientCache)
 
 	return &Goraft{
 		Id:         options.Id,
-		RpcPort:options.RpcPort,
+		RpcPort:    options.RpcPort,
 		ClientPort: options.ClintPort,
 		HttpPrefix: options.HttpPrefix,
 		election:   election,
 		replation:  replation,
-		storage:    storage,
+		storage:    s,
 		isStart:    false,
 		logger:     logger,
-	}, nil
+	}
 }
 
 func (g *Goraft) Start() error {
-	if err := g.replation.Start(); err != nil {
+	if err := g.election.Start(); err != nil {
 		return err
 	}
-
-	if err := g.election.Start(); err != nil {
+	if err := g.replation.Start(); err != nil {
 		return err
 	}
 
@@ -100,5 +97,17 @@ func (g *Goraft) startHttp() error {
 		g.logger.Fatal("start clint http server failed,Error", err.Error())
 		return err
 	}
+	return nil
+}
+
+func (g *Goraft) startRpc() error {
+	rpc.Register(g.election)
+	rpc.Register(g.replation)
+	rpc.HandleHTTP()
+	l, err := net.Listen("tcp", fmt.Sprintf(":%s", g.RpcPort))
+	if err != nil {
+		g.logger.Fatal("listen error:%s", err.Error())
+	}
+	go http.Serve(l, nil)
 	return nil
 }

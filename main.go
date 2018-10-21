@@ -1,21 +1,25 @@
 package main
 
 import (
-	"flag"
-	"gopkg.in/ini.v1"
+	"donniezhangzq/goraft/constant"
+	"donniezhangzq/goraft/goraft"
+	"donniezhangzq/goraft/log"
 	"errors"
+	"flag"
 	"fmt"
 	"github.com/judwhite/go-svc/svc"
+	logr "github.com/sirupsen/logrus"
+	"gopkg.in/ini.v1"
 )
 
-type program struct{
-	logger *Logger
-	goraft *Goraft
+type program struct {
+	logger *log.Logger
+	goraft *goraft.Goraft
 }
 
 func initConfig() (*ini.File, error) {
 	var configPath string
-	flag.StringVar(&configPath, "config", defaultConfigPath, "config file")
+	flag.StringVar(&configPath, "config", constant.DefaultConfigPath, "config file")
 	flag.Parse()
 	if configPath == "" {
 		return nil, errors.New("configPath is empty")
@@ -25,35 +29,36 @@ func initConfig() (*ini.File, error) {
 	return config, err
 }
 
-
 func main() {
 	config, err := initConfig()
 	if err != nil {
 		panic(fmt.Sprintf("init config failed,Error:%s", err.Error()))
 	}
 
-	options := NewOption()
+	options := goraft.NewOption()
 	if err := options.ParseOptions(config); err != nil {
 		panic(fmt.Sprintf("ParseOptions failed,Error:%s", err.Error()))
 	}
 
-	logger := NewLogger()
+	logger := log.NewLogger()
 	if err := logger.InitLogger(options); err != nil {
 		panic(fmt.Sprintf("init logger failed,Error:%s", err.Error()))
 	}
-
-	goraft, err := NewGoraft(options, logger)
-	if err != nil {
-		logger.Error(fmt.Sprintf("create goraft failed,Error:%s", err.Error()))
-		panic(err.Error())
+	//init rpc client cache
+	clientCache := goraft.NewRpcClientCache()
+	for _, member := range options.Members.GetMembers() {
+		if err := clientCache.AddRpcClient(member); err != nil {
+			logger.Fatal(fmt.Sprintf("addRpcClientCache failed,member:%v,Error:%s", member, err.Error()))
+		}
 	}
 
-	prg := &program{logger: logger, goraft:goraft}
+	goraft := goraft.NewGoraft(options, logger, clientCache)
+
+	prg := &program{logger: logger, goraft: goraft}
 	if err := svc.Run(prg); err != nil {
 		panic(fmt.Sprintf("goraft start failed,Error:%s", err.Error()))
 	}
 }
-
 
 func (p *program) Init(env svc.Environment) error {
 	p.logger.Debug(fmt.Sprintf("is win service? %v\n", env.IsWindowsService()))
@@ -61,6 +66,7 @@ func (p *program) Init(env svc.Environment) error {
 }
 
 func (p *program) Start() error {
+	f := log.NewFatalHook(p.FatalHook, p.logger)
 	p.logger.Debug("goraft startting")
 	defer p.logger.Debug("goraft startted")
 	return p.goraft.Start()
@@ -70,4 +76,9 @@ func (p *program) Stop() error {
 	p.logger.Debug("goraft stopping")
 	defer p.logger.Debug("goraft stopped")
 	return p.goraft.Stop()
+}
+
+func (p *program) FatalHook(entry *logr.Entry) error {
+	p.logger.Info("enter fatal log hook")
+	return p.Stop()
 }

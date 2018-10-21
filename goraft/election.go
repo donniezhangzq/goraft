@@ -3,11 +3,15 @@ package goraft
 import (
 	"donniezhangzq/goraft/constant"
 	"donniezhangzq/goraft/log"
+	"net/rpc"
+	"sync"
 	"time"
 )
 
 type Election struct {
-	role constant.ElectionState
+	id      string
+	role    constant.ElectionState
+	roleMut *sync.Mutex
 	//id who the server vote for
 	voteFor       string
 	members       *Members
@@ -19,16 +23,20 @@ type Election struct {
 	CandidateMinTimeout time.Duration
 	CandidateMaxTimeout time.Duration
 	logger              *log.Logger
+	rpcClientCache      *RpcClientCache
 }
 
-func NewElection(options *Options, logger *log.Logger) *Election {
+func NewElection(options *Options, logger *log.Logger, rpcclientCache *RpcClientCache) *Election {
 	return &Election{
+		id:                 options.Id,
 		role:               constant.Follower,
+		roleMut:            &sync.Mutex{},
 		voteFor:            options.Id,
 		members:            options.Members,
 		ElectionMinTimeout: options.ElectionTimeoutMin,
 		ElectionMaxTimeout: options.ElectionTimeoutMax,
 		logger:             logger,
+		rpcClientCache:     rpcclientCache,
 	}
 }
 
@@ -45,15 +53,34 @@ func (e *Election) GetRole() constant.ElectionState {
 	return e.role
 }
 
-func (e *Election) heartBeat() {
+func (e *Election) HeartBeat() {
 
 }
 
-func (e *Election) discoverMembers() {
+//vote for candidate
+func (e *Election) Vote() {
 
+}
+
+func (e *Election) requestForVote(id string, client *rpc.Client, response *RpcElectionResponse) {
+	var args = new(RpcElectionReqArgs)
+	if err := client.Call(constant.RpcVote, args, response); err != nil {
+		e.logger.Warn("request vote from id:%s failed,Error:%s", id, err.Error())
+	}
 }
 
 func (e *Election) contest() {
-	e.role = constant.Candidate
+	//transfer follower to candidate
+	e.transterToCandidate()
+	//request for vote
+	for id, client := range e.rpcClientCache.GetRpcClients() {
+		if id != e.id {
+			response := new(RpcElectionResponse)
+			e.requestForVote(id, client, response)
+		}
+	}
+}
 
+func (e *Election) transterToCandidate() {
+	e.role = constant.Candidate
 }

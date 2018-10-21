@@ -1,37 +1,38 @@
 package log
 
 import (
+	"donniezhangzq/goraft/constant"
+	"donniezhangzq/goraft/goraft"
+	logr "github.com/sirupsen/logrus"
+	"io"
 	"os"
 	"path/filepath"
-
-	log "github.com/sirupsen/logrus"
-	"io"
 	"sync"
 )
 
 type Logger struct {
-	logger *log.Logger
-	entry  *log.Entry
+	logger *logr.Logger
+	entry  *logr.Entry
 	mu     *sync.Mutex
 }
 
 func NewLogger() *Logger {
-	logger := log.New()
-	entry := log.NewEntry(logger)
+	logger := logr.New()
+	entry := logr.NewEntry(logger)
 	return &Logger{
 		logger: logger,
 		entry:  entry,
 	}
 }
 
-func (l *Logger) InitLogger(options *Options) error {
+func (l *Logger) InitLogger(options *goraft.Options) error {
 	file, err := l.createLogPath(options.LogPath)
 	if err != nil {
 		return err
 	}
 	l.SetOutput(file)
-	l.SetFormatter(&log.TextFormatter{})
-	level, err := log.ParseLevel(options.LogLevel)
+	l.SetFormatter(&logr.TextFormatter{})
+	level, err := logr.ParseLevel(options.LogLevel)
 	if err != nil {
 		return err
 	}
@@ -58,22 +59,22 @@ func (l *Logger) SetOutput(out io.Writer) {
 	l.logger.Out = out
 }
 
-func (l *Logger) SetFormatter(formatter log.Formatter) {
+func (l *Logger) SetFormatter(formatter logr.Formatter) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.logger.Formatter = formatter
 }
 
-func (l *Logger) SetLevel(level log.Level) {
+func (l *Logger) SetLevel(level logr.Level) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.logger.Level = level
 }
 
-func (l *Logger) SetDefaultField(role ElectionState, id string) {
+func (l *Logger) SetDefaultField(role constant.ElectionState, id string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.entry = l.entry.WithFields(log.Fields{
+	l.entry = l.entry.WithFields(logr.Fields{
 		"role": role,
 		"id":   id,
 	})
@@ -99,20 +100,19 @@ func (l *Logger) Fatal(args ...interface{}) {
 	l.entry.Fatal(args...)
 }
 
-
 type FatalHook struct {
-	f      func(entry *log.Entry) error
+	f      func(entry *logr.Entry) error
 	logger *Logger
 }
 
-func NewFatalHook(f func(entry *log.Entry) error, logger *Logger) *FatalHook {
+func NewFatalHook(f func(entry *logr.Entry) error, logger *Logger) *FatalHook {
 	return &FatalHook{
 		f:      f,
 		logger: logger,
 	}
 }
 
-func (fh *FatalHook) AddHook(hook log.Hook) {
+func (fh *FatalHook) AddHook(hook logr.Hook) {
 	fh.logger.mu.Lock()
 	defer fh.logger.mu.Unlock()
 	for _, level := range hook.Levels() {
@@ -120,11 +120,10 @@ func (fh *FatalHook) AddHook(hook log.Hook) {
 	}
 }
 
-func (fh FatalHook) Levels() []log.Level {
-	return []log.Level{log.FatalLevel}
-	log.AddHook()
+func (fh FatalHook) Levels() []logr.Level {
+	return []logr.Level{logr.FatalLevel}
 }
 
-func (fh FatalHook) Fire(entry *log.Entry) error {
+func (fh FatalHook) Fire(entry *logr.Entry) error {
 	return fh.f(entry)
 }

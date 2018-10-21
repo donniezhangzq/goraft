@@ -19,6 +19,7 @@ type Replation struct {
 	//log number to sync at once
 	tocommitBufferSize int
 	logger             *log.Logger
+	rpcClientCache     *RpcClientCache
 }
 
 type Log struct {
@@ -29,7 +30,7 @@ type Log struct {
 	isCommited bool
 }
 
-func NewReplation(options *Options, logger *log.Logger) *Replation {
+func NewReplation(options *Options, logger *log.Logger, rpcClientCache *RpcClientCache) *Replation {
 	return &Replation{
 		term:               1,
 		index:              0,
@@ -42,6 +43,7 @@ func NewReplation(options *Options, logger *log.Logger) *Replation {
 		lastApplied:        0,
 		tocommitBufferSize: options.TocommitBufferSize,
 		logger:             logger,
+		rpcClientCache:     rpcClientCache,
 	}
 }
 

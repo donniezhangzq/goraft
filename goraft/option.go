@@ -127,6 +127,9 @@ func (op *Options) ParseOptions(config *ini.File) error {
 			}
 			op.Members.members = append(op.Members.members, m)
 		}
+		if !op.Members.checkIdUniq() {
+			return constant.ErrIdInMembersDuplicate
+		}
 	} else {
 		return constant.ErrMembersNotExist
 	}

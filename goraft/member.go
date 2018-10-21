@@ -34,3 +34,18 @@ func NewMembers() *Members {
 		mut:     &sync.Mutex{},
 	}
 }
+
+func (m *Members) checkIdUniq() bool {
+	for i := 0; i < len(m.members)-1; i++ {
+		for j := i + 1; j < len(m.members); j++ {
+			if m.members[i] == m.members[j] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (m *Members) GetMembers() []*Member {
+	return m.members
+}

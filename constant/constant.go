@@ -14,16 +14,16 @@ const (
 )
 
 const (
-	MinMemberNumber = 3
+	MinMemberNumber  = 3
 	MembersConfigSep = ","
-	AddressPortSep = ":"
+	AddressPortSep   = ":"
 )
 
 //configuration section
 const (
-	DefaultSection = "default"
-	LogSection = "log"
-	ElectionSection = "election"
+	DefaultSection     = "default"
+	LogSection         = "log"
+	ElectionSection    = "election"
 	ReplicationSection = "replication"
 )
 
@@ -37,3 +37,7 @@ const (
 	MatchIp = `^([0-9]{1,3}\.){3}[0-9]{1,3}$`
 )
 
+//rpc method
+const (
+	RpcVote = "Election.Vote"
+)
