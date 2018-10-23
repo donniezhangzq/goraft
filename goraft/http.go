@@ -34,7 +34,27 @@ func (r *RpcClientCache) GetRpcClients() map[string]*rpc.Client {
 }
 
 type RpcElectionReqArgs struct {
+	Term         int
+	CandidateId  string
+	LastLogIndex int
+	LastLogTerm  int
 }
 
 type RpcElectionResponse struct {
+	Term        int
+	VoteGranted bool
+}
+
+type RpcAppendEntriesReqArgs struct {
+	Term         int
+	LeaderId     string
+	PreLogIndex  int
+	PreLogTerm   int
+	Entries      *Entries
+	LeaderCommit int
+}
+
+type RpcAppendEntriesResponse struct {
+	Term    int
+	Success bool
 }

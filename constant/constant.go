@@ -39,5 +39,6 @@ const (
 
 //rpc method
 const (
-	RpcVote = "Election.Vote"
+	RpcVote          = "Election.Vote"
+	RpcAppendEntries = "Replation.AppendEntries"
 )

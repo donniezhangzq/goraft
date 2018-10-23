@@ -2,7 +2,6 @@ package log
 
 import (
 	"donniezhangzq/goraft/constant"
-	"donniezhangzq/goraft/goraft"
 	logr "github.com/sirupsen/logrus"
 	"io"
 	"os"
@@ -25,14 +24,14 @@ func NewLogger() *Logger {
 	}
 }
 
-func (l *Logger) InitLogger(options *goraft.Options) error {
-	file, err := l.createLogPath(options.LogPath)
+func (l *Logger) InitLogger(logPath, logLevel string) error {
+	file, err := l.createLogPath(logPath)
 	if err != nil {
 		return err
 	}
 	l.SetOutput(file)
 	l.SetFormatter(&logr.TextFormatter{})
-	level, err := logr.ParseLevel(options.LogLevel)
+	level, err := logr.ParseLevel(logLevel)
 	if err != nil {
 		return err
 	}
@@ -71,12 +70,13 @@ func (l *Logger) SetLevel(level logr.Level) {
 	l.logger.Level = level
 }
 
-func (l *Logger) SetDefaultField(role constant.ElectionState, id string) {
+func (l *Logger) SetDefaultField(role constant.ElectionState, id string, leader string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.entry = l.entry.WithFields(logr.Fields{
-		"role": role,
-		"id":   id,
+		"leader": leader,
+		"role":   role,
+		"id":     id,
 	})
 }
 

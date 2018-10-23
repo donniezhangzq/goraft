@@ -20,6 +20,7 @@ var (
 //optons
 var (
 	ErrIdNotExist            = errors.New("id not exist in config file")
+	ErrMinValueMoreThanMax   = errors.New("min value is not less than max value")
 	ErrMembersNotExist       = errors.New("members not exist in config file")
 	ErrMembersNumberLess     = errors.New(fmt.Sprintf("members' number less thean expect:%d", MinMemberNumber))
 	ErrMembersNumberIsNotOdd = errors.New("members's number is not odd")
@@ -27,4 +28,15 @@ var (
 	ErrIpformatError         = errors.New("ip address format error")
 	ErrIdNotInMembers        = errors.New("id config not in members config")
 	ErrIdInMembersDuplicate  = errors.New("id in members is not uniq")
+)
+
+//replation
+var (
+	ErrTermLessThanCurrentTerm = errors.New("term in less than currentTerm")
+)
+
+//election
+var (
+	ErrOnlyLeaderCanSendHearbeat = errors.New("only leader can send heartbeat")
+	ErrHearbeatTermLess          = errors.New("hearbeat args's term is less then the server's term")
 )

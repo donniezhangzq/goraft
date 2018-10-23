@@ -1,15 +1,14 @@
-package storage
+package goraft
 
 import (
-	"sync"
 	"donniezhangzq/goraft/constant"
-	"donniezhangzq/goraft/goraft"
+	"sync"
 )
 
 type Storage struct {
-	bucket    [constant.BucketCount]*LinkNode
-	bucketMux [constant.BucketCount]*sync.Mutex
-	election  *goraft.Election
+	bucket     [constant.BucketCount]*LinkNode
+	bucketMux  [constant.BucketCount]*sync.Mutex
+	commonInfo *CommonInfo
 }
 
 type LinkNode struct {
@@ -22,8 +21,8 @@ type Node struct {
 	value string
 }
 
-func NewStorage(election *goraft.Election) *Storage {
-	storage := &Storage{election: election}
+func NewStorage(commonInfo *CommonInfo) *Storage {
+	storage := &Storage{commonInfo: commonInfo}
 	for i := 0; i < constant.BucketCount; i++ {
 		storage.bucket[i] = NewLinkNode()
 		storage.bucketMux[i] = &sync.Mutex{}
@@ -41,7 +40,7 @@ func (s *Storage) hashMap(key string) int {
 
 func (s *Storage) Add(node *Node) error {
 	//key can be changed only by master
-	if s.election.GetRole() != constant.Leader {
+	if s.commonInfo.GetRole() != constant.Leader {
 		return constant.ErrRoleIsNotLeader
 	}
 
@@ -75,7 +74,7 @@ func (s *Storage) Get(key string) string {
 
 func (s *Storage) Del(key string) error {
 	//key can be changed only by master
-	if s.election.GetRole() != constant.Leader {
+	if s.commonInfo.GetRole() != constant.Leader {
 		return constant.ErrRoleIsNotLeader
 	}
 

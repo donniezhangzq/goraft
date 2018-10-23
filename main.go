@@ -41,7 +41,7 @@ func main() {
 	}
 
 	logger := log.NewLogger()
-	if err := logger.InitLogger(options); err != nil {
+	if err := logger.InitLogger(options.LogPath, options.LogLevel); err != nil {
 		panic(fmt.Sprintf("init logger failed,Error:%s", err.Error()))
 	}
 	//init rpc client cache
@@ -52,9 +52,9 @@ func main() {
 		}
 	}
 
-	goraft := goraft.NewGoraft(options, logger, clientCache)
+	g := goraft.NewGoraft(options, logger, clientCache)
 
-	prg := &program{logger: logger, goraft: goraft}
+	prg := &program{logger: logger, goraft: g}
 	if err := svc.Run(prg); err != nil {
 		panic(fmt.Sprintf("goraft start failed,Error:%s", err.Error()))
 	}
@@ -67,6 +67,7 @@ func (p *program) Init(env svc.Environment) error {
 
 func (p *program) Start() error {
 	f := log.NewFatalHook(p.FatalHook, p.logger)
+	f.AddHook(f)
 	p.logger.Debug("goraft startting")
 	defer p.logger.Debug("goraft startted")
 	return p.goraft.Start()

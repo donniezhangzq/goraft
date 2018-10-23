@@ -161,6 +161,9 @@ func (op *Options) ParseOptions(config *ini.File) error {
 		}
 		op.ElectionTimeoutMax = time.Duration(etmax) * time.Millisecond
 	}
+	if op.ElectionTimeoutMin >= op.ElectionTimeoutMax {
+		return constant.ErrMinValueMoreThanMax
+	}
 	if electionCfg.HasKey("candidate_timeout_min") {
 		ctmin, err := electionCfg.Key("candidate_timeout_min").Int()
 		if err != nil {
@@ -174,6 +177,9 @@ func (op *Options) ParseOptions(config *ini.File) error {
 			return err
 		}
 		op.CandidateTimeoutMax = time.Duration(ctmax) * time.Millisecond
+	}
+	if op.CandidateTimeoutMin >= op.CandidateTimeoutMax {
+		return constant.ErrMinValueMoreThanMax
 	}
 	if replicationCfg.HasKey("tocommit_buffer_size") {
 		op.TocommitBufferSize, err = replicationCfg.Key("tocommit_buffer_size").Int()

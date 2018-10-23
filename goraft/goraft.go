@@ -2,7 +2,6 @@ package goraft
 
 import (
 	"donniezhangzq/goraft/log"
-	"donniezhangzq/goraft/storage"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"net"
@@ -16,30 +15,29 @@ type Server interface {
 }
 
 type Goraft struct {
-	Id         string
 	ClientPort int
 	RpcPort    int
 	HttpPrefix string
 	election   *Election
 	replation  *Replation
-	storage    *storage.Storage
+	storage    *Storage
 	isStart    bool
 	logger     *log.Logger
 }
 
 func NewGoraft(options *Options, logger *log.Logger, rpcClientCache *RpcClientCache) *Goraft {
-	election := NewElection(options, logger, rpcClientCache)
-	s := storage.NewStorage(election)
-	replation := NewReplation(options, logger, rpcClientCache)
+	commonInfo := NewCommonInfo(options, logger)
+	replation := NewReplation(options, logger, rpcClientCache, commonInfo)
+	election := NewElection(options, logger, rpcClientCache, replation, commonInfo)
+	storage := NewStorage(commonInfo)
 
 	return &Goraft{
-		Id:         options.Id,
 		RpcPort:    options.RpcPort,
 		ClientPort: options.ClintPort,
 		HttpPrefix: options.HttpPrefix,
 		election:   election,
 		replation:  replation,
-		storage:    s,
+		storage:    storage,
 		isStart:    false,
 		logger:     logger,
 	}
@@ -67,6 +65,7 @@ func (g *Goraft) Stop() error {
 	if err := g.election.Stop(); err != nil {
 		return err
 	}
+	return nil
 }
 
 func (g *Goraft) GetKey(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

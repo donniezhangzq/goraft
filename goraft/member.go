@@ -49,3 +49,7 @@ func (m *Members) checkIdUniq() bool {
 func (m *Members) GetMembers() []*Member {
 	return m.members
 }
+
+func (m *Members) GetCount() int {
+	return len(m.members)
+}
