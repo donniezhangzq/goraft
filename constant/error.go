@@ -40,3 +40,8 @@ var (
 	ErrOnlyLeaderCanSendHearbeat = errors.New("only leader can send heartbeat")
 	ErrHearbeatTermLess          = errors.New("hearbeat args's term is less then the server's term")
 )
+
+//log
+var (
+	ErrLogPathIsNotFile = errors.New("log path is not a file")
+)

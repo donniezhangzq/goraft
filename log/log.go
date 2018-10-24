@@ -2,6 +2,7 @@ package log
 
 import (
 	"donniezhangzq/goraft/constant"
+	"donniezhangzq/goraft/utils"
 	logr "github.com/sirupsen/logrus"
 	"io"
 	"os"
@@ -40,15 +41,18 @@ func (l *Logger) InitLogger(logPath, logLevel string) error {
 }
 
 func (l *Logger) createLogPath(logPath string) (*os.File, error) {
-	dir, err := filepath.Abs(filepath.Dir(logPath))
-	if err != nil {
-		return nil, err
-	}
-	if err := os.MkdirAll(dir, 0644); err != nil {
-		return nil, err
+	if !utils.IsExist(logPath) {
+		dir := filepath.Dir(logPath)
+		if err := os.MkdirAll(dir, 0644); err != nil {
+			return nil, err
+		}
 	}
 
-	file, err := os.OpenFile(logPath, os.O_APPEND, 0644)
+	if utils.IsDir(logPath) {
+		return nil, constant.ErrLogPathIsNotFile
+	}
+
+	file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE, 0644)
 	return file, err
 }
 
