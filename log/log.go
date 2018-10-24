@@ -22,6 +22,7 @@ func NewLogger() *Logger {
 	return &Logger{
 		logger: logger,
 		entry:  entry,
+		mu:     &sync.Mutex{},
 	}
 }
 
