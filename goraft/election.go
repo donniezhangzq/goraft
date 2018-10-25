@@ -25,6 +25,7 @@ type Election struct {
 	rpcClientCache      *RpcClientCache
 	replation           *Replation
 	electionTimes       int
+	contestMut          *sync.Mutex
 }
 
 func NewElection(options *Options, logger *log.Logger, rpcclientCache *RpcClientCache, replation *Replation,
@@ -40,12 +41,18 @@ func NewElection(options *Options, logger *log.Logger, rpcclientCache *RpcClient
 		rpcClientCache:     rpcclientCache,
 		replation:          replation,
 		electionTimes:      0,
+		contestMut:         &sync.Mutex{},
 	}
 }
 
 func (e *Election) Start() error {
 	//start a election
+	e.contestMut.Lock()
 	e.contest()
+	e.contestMut.Unlock()
+
+	go e.monitorHearbeatLost()
+
 	e.logger.Debug("election model start")
 	return nil
 }
@@ -167,4 +174,23 @@ func (e *Election) contest() {
 
 	//the server hed transfered to leader or follower
 	e.electionTimes = 0
+}
+
+func (e *Election) monitorHearbeatLost() {
+	var ticker = time.NewTicker(constant.MonitorHearbeatlostInterval)
+	defer ticker.Stop()
+
+	for {
+		r := e.getRandomElecationTimeout()
+		timeout := e.commonInfo.lastHeartbeatTime.Add(r)
+		if time.Now().Before(timeout) {
+			e.contestMut.Lock()
+			e.contest()
+			e.contestMut.Unlock()
+		}
+
+		select {
+		case <-ticker.C:
+		}
+	}
 }

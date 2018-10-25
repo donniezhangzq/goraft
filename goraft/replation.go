@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/rpc"
 	"sync"
+	"time"
 )
 
 type Replation struct {
@@ -128,6 +129,7 @@ func (r *Replation) AppendEntries(args *RpcAppendEntriesReqArgs, response *RpcAp
 	if args.Term < r.currentTerm {
 		return constant.ErrHearbeatTermLess
 	}
+	r.commonInfo.SetLastHearbeattime(time.Now())
 	r.commonInfo.SetLeaderId(args.LeaderId)
 
 	return nil

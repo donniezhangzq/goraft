@@ -1,5 +1,7 @@
 package constant
 
+import "time"
+
 //leader election state
 type ElectionState int
 
@@ -45,5 +47,6 @@ const (
 
 //election
 const (
-	MaxElectionTimes = 5
+	MaxElectionTimes            = 5
+	MonitorHearbeatlostInterval = 50 * time.Microsecond
 )

@@ -5,24 +5,27 @@ import (
 	"donniezhangzq/goraft/log"
 	"fmt"
 	"sync"
+	"time"
 )
 
 type CommonInfo struct {
-	Id       string
-	role     constant.ElectionState
-	roleMut  *sync.Mutex
-	Members  *Members
-	logger   *log.Logger
-	leaderId string
+	Id                string
+	role              constant.ElectionState
+	roleMut           *sync.Mutex
+	Members           *Members
+	logger            *log.Logger
+	leaderId          string
+	lastHeartbeatTime time.Time
 }
 
 func NewCommonInfo(options *Options, logger *log.Logger) *CommonInfo {
 	return &CommonInfo{
-		Id:      options.Id,
-		role:    constant.Follower,
-		roleMut: &sync.Mutex{},
-		Members: NewMembers(),
-		logger:  logger,
+		Id:                options.Id,
+		role:              constant.Follower,
+		roleMut:           &sync.Mutex{},
+		Members:           NewMembers(),
+		logger:            logger,
+		lastHeartbeatTime: time.Now(),
 	}
 }
 
@@ -63,4 +66,12 @@ func (c *CommonInfo) GetLeaderId() string {
 
 func (c *CommonInfo) SetLeaderId(id string) {
 	c.leaderId = id
+}
+
+func (c *CommonInfo) GetLastHeartbeatTime() time.Time {
+	return c.lastHeartbeatTime
+}
+
+func (c *CommonInfo) SetLastHearbeattime(t time.Time) {
+	c.lastHeartbeatTime = t
 }
