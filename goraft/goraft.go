@@ -48,9 +48,11 @@ func NewGoraft(options *Options, logger *log.Logger, rpcClientCache *RpcClientCa
 }
 
 func (g *Goraft) Start() error {
+	g.logger.Debug("enter goraft start function")
 	if err := g.startRpc(); err != nil {
 		return err
 	}
+	g.logger.Debug("start to add member client cache")
 
 	for _, member := range g.members.GetMembers() {
 		if err := g.rpcClientCache.AddRpcClient(member); err != nil {
