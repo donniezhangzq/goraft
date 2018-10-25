@@ -68,6 +68,8 @@ func (g *Goraft) Start() error {
 
 	g.isStart = true
 
+	g.logger.Debug("goraft start")
+
 	if err := g.startHttp(); err != nil {
 		return err
 	}

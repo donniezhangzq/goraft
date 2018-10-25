@@ -66,6 +66,7 @@ func NewReplation(options *Options, logger *log.Logger, rpcClientCache *RpcClien
 }
 
 func (r *Replation) Start() error {
+	r.logger.Debug("replation model start")
 	return nil
 }
 

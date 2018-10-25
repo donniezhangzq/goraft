@@ -42,3 +42,8 @@ const (
 	RpcVote          = "Election.Vote"
 	RpcAppendEntries = "Replation.AppendEntries"
 )
+
+//election
+const (
+	MaxElectionTimes = 5
+)

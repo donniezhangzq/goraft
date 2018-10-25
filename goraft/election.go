@@ -24,6 +24,7 @@ type Election struct {
 	logger              *log.Logger
 	rpcClientCache      *RpcClientCache
 	replation           *Replation
+	electionTimes       int
 }
 
 func NewElection(options *Options, logger *log.Logger, rpcclientCache *RpcClientCache, replation *Replation,
@@ -38,12 +39,14 @@ func NewElection(options *Options, logger *log.Logger, rpcclientCache *RpcClient
 		logger:             logger,
 		rpcClientCache:     rpcclientCache,
 		replation:          replation,
+		electionTimes:      0,
 	}
 }
 
 func (e *Election) Start() error {
 	//start a election
 	e.contest()
+	e.logger.Debug("election model start")
 	return nil
 }
 
@@ -115,8 +118,18 @@ func (e *Election) requestForVote(id string, client *rpc.Client, response *RpcEl
 }
 
 func (e *Election) contest() {
+	e.electionTimes += 1
+	if e.electionTimes == constant.MaxElectionTimes {
+		e.logger.Error("election failed until maxElectionTimes")
+		e.electionTimes = 0
+		return
+	}
+
+	e.logger.Debug("election start to contest")
+
 	//first step:transfer follower to candidate
 	e.commonInfo.transferToCandidate()
+
 	//second step:request for vote
 	//todo async call vote
 	var voteCount = 0
@@ -135,9 +148,11 @@ func (e *Election) contest() {
 			}
 		}
 	}
+
 	//third step:transfer to leader(win) or remain candidate(fail)
 	if winVote {
 		//win the vote and send heartbeat to others
+		e.electionTimes = 0
 		e.commonInfo.transferToLeader()
 		e.replation.hearbeat()
 	} else {
@@ -148,4 +163,7 @@ func (e *Election) contest() {
 			e.contest()
 		}
 	}
+
+	//the server hed transfered to leader or follower
+	e.electionTimes = 0
 }

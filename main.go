@@ -63,8 +63,6 @@ func (p *program) Init(env svc.Environment) error {
 func (p *program) Start() error {
 	f := log.NewFatalHook(p.FatalHook, p.logger)
 	f.AddHook(f)
-	p.logger.Debug("goraft startting")
-	defer p.logger.Debug("goraft startted")
 	return p.goraft.Start()
 }
 
