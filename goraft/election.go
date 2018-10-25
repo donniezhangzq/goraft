@@ -122,6 +122,7 @@ func (e *Election) contest() {
 	if e.electionTimes == constant.MaxElectionTimes {
 		e.logger.Error("election failed until maxElectionTimes")
 		e.electionTimes = 0
+		e.commonInfo.transferToFollower()
 		return
 	}
 
