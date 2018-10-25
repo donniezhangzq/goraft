@@ -101,6 +101,7 @@ func (r *Replation) GetLastLogTerm() int {
 
 //send  rpc request for append entries to followers and candidate
 func (r *Replation) hearbeat() {
+	r.logger.Debug("prepare to send hearbeat")
 	if r.commonInfo.GetRole() != constant.Leader {
 		r.logger.Error(constant.ErrOnlyLeaderCanSendHearbeat.Error())
 		return
@@ -126,6 +127,7 @@ func (r *Replation) requestAppendEntries(id string, client *rpc.Client, response
 
 func (r *Replation) AppendEntries(args *RpcAppendEntriesReqArgs, response *RpcAppendEntriesResponse) error {
 	//todo complete the appendEntries alghriam
+	r.logger.Debug("receive AppendEntries rpc request,Args:%v", args)
 	if args.Term < r.currentTerm {
 		return constant.ErrHearbeatTermLess
 	}

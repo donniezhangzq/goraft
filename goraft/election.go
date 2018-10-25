@@ -90,6 +90,7 @@ func (e *Election) getRandMinToMax(min int64, max int64) int64 {
 
 //vote for candidate
 func (e *Election) Vote(args *RpcElectionReqArgs, response *RpcElectionResponse) error {
+	e.logger.Debug("receive vote rpc request.args:%v", args)
 	response.Term = args.Term
 	response.VoteGranted = false
 	if args.Term < e.replation.GetCurrentTerm() {
@@ -113,6 +114,7 @@ func (e *Election) Vote(args *RpcElectionReqArgs, response *RpcElectionResponse)
 }
 
 func (e *Election) requestForVote(id string, client *rpc.Client, response *RpcElectionResponse) {
+	e.logger.Debug("prepare to send vote request")
 	var args = new(RpcElectionReqArgs)
 	args.CandidateId = e.commonInfo.Id
 	args.Term = e.replation.GetCurrentTerm()
