@@ -53,7 +53,7 @@ func (l *Logger) createLogPath(logPath string) (*os.File, error) {
 		return nil, constant.ErrLogPathIsNotFile
 	}
 
-	file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE, 0644)
+	file, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	return file, err
 }
 
