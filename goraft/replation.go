@@ -66,22 +66,22 @@ func NewReplation(options *Options, logger *log.Logger, rpcClientCache *RpcClien
 	}
 }
 
-func (r *Replation) Start() error {
+func (r *Replation) start() error {
 	r.logger.Debug("replation model start")
 	return nil
 }
 
-func (r *Replation) Stop() error {
+func (r *Replation) stop() error {
 	return nil
 }
 
-func (r *Replation) GetCurrentTerm() int {
+func (r *Replation) getCurrentTerm() int {
 	r.currentTermMut.Lock()
 	defer r.currentTermMut.Unlock()
 	return r.currentTerm
 }
 
-func (r *Replation) SetCurrentTerm(term int) error {
+func (r *Replation) setCurrentTerm(term int) error {
 	r.currentTermMut.Lock()
 	defer r.currentTermMut.Unlock()
 	if term < r.currentTerm {
@@ -91,11 +91,11 @@ func (r *Replation) SetCurrentTerm(term int) error {
 	return nil
 }
 
-func (r *Replation) GetLastLogIndex() int {
+func (r *Replation) getLastLogIndex() int {
 	return r.lastLogIndex
 }
 
-func (r *Replation) GetLastLogTerm() int {
+func (r *Replation) getLastLogTerm() int {
 	return r.lastLogTerm
 }
 

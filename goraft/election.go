@@ -45,7 +45,7 @@ func NewElection(options *Options, logger *log.Logger, rpcclientCache *RpcClient
 	}
 }
 
-func (e *Election) Start() error {
+func (e *Election) start() error {
 	//start a election
 	e.contestMut.Lock()
 	e.contest()
@@ -57,7 +57,7 @@ func (e *Election) Start() error {
 	return nil
 }
 
-func (e *Election) Stop() error {
+func (e *Election) stop() error {
 	return nil
 }
 
@@ -93,12 +93,12 @@ func (e *Election) Vote(args *RpcElectionReqArgs, response *RpcElectionResponse)
 	e.logger.Debug("receive vote rpc request.args:%v", args)
 	response.Term = args.Term
 	response.VoteGranted = false
-	if args.Term < e.replation.GetCurrentTerm() {
+	if args.Term < e.replation.getCurrentTerm() {
 		//not grant vote
 		return nil
 	}
 	//follower will deny its vote if its own log is more up-do-date
-	if args.LastLogTerm < e.replation.GetLastLogTerm() || args.LastLogIndex < e.replation.GetLastLogIndex() {
+	if args.LastLogTerm < e.replation.getLastLogTerm() || args.LastLogIndex < e.replation.getLastLogIndex() {
 		//not grant vote
 		return nil
 	}
@@ -117,9 +117,9 @@ func (e *Election) requestForVote(id string, client *rpc.Client, response *RpcEl
 	e.logger.Debug("prepare to send vote request")
 	var args = new(RpcElectionReqArgs)
 	args.CandidateId = e.commonInfo.Id
-	args.Term = e.replation.GetCurrentTerm()
-	args.LastLogIndex = e.replation.GetLastLogIndex()
-	args.LastLogTerm = e.replation.GetLastLogTerm()
+	args.Term = e.replation.getCurrentTerm()
+	args.LastLogIndex = e.replation.getLastLogIndex()
+	args.LastLogTerm = e.replation.getLastLogTerm()
 	//todo async call vote
 	if err := client.Call(constant.RpcVote, args, response); err != nil {
 		e.logger.Warn("request vote from id:%s failed,Error:%s", id, err.Error())

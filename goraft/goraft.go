@@ -9,11 +9,6 @@ import (
 	"net/rpc"
 )
 
-type Server interface {
-	Start() error
-	Stop() error
-}
-
 type Goraft struct {
 	ClientPort     int
 	RpcPort        int
@@ -60,11 +55,11 @@ func (g *Goraft) Start() error {
 		}
 	}
 
-	if err := g.election.Start(); err != nil {
+	if err := g.election.start(); err != nil {
 		return err
 	}
 
-	if err := g.replation.Start(); err != nil {
+	if err := g.replation.start(); err != nil {
 		return err
 	}
 
@@ -83,11 +78,11 @@ func (g *Goraft) Stop() error {
 		return nil
 	}
 
-	if err := g.replation.Stop(); err != nil {
+	if err := g.replation.stop(); err != nil {
 		return err
 	}
 
-	if err := g.election.Stop(); err != nil {
+	if err := g.election.stop(); err != nil {
 		return err
 	}
 	return nil
