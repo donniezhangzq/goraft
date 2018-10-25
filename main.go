@@ -46,11 +46,6 @@ func main() {
 	}
 	//init rpc client cache
 	clientCache := goraft.NewRpcClientCache()
-	for _, member := range options.Members.GetMembers() {
-		if err := clientCache.AddRpcClient(member); err != nil {
-			logger.Fatal(fmt.Sprintf("addRpcClientCache failed,member:%v,Error:%s", member, err.Error()))
-		}
-	}
 
 	g := goraft.NewGoraft(options, logger, clientCache)
 

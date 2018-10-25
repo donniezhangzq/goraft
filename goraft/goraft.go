@@ -15,14 +15,16 @@ type Server interface {
 }
 
 type Goraft struct {
-	ClientPort int
-	RpcPort    int
-	HttpPrefix string
-	election   *Election
-	replation  *Replation
-	storage    *Storage
-	isStart    bool
-	logger     *log.Logger
+	ClientPort     int
+	RpcPort        int
+	HttpPrefix     string
+	election       *Election
+	replation      *Replation
+	storage        *Storage
+	isStart        bool
+	logger         *log.Logger
+	members        *Members
+	rpcClientCache *RpcClientCache
 }
 
 func NewGoraft(options *Options, logger *log.Logger, rpcClientCache *RpcClientCache) *Goraft {
@@ -32,24 +34,39 @@ func NewGoraft(options *Options, logger *log.Logger, rpcClientCache *RpcClientCa
 	storage := NewStorage(commonInfo)
 
 	return &Goraft{
-		RpcPort:    options.RpcPort,
-		ClientPort: options.ClintPort,
-		HttpPrefix: options.HttpPrefix,
-		election:   election,
-		replation:  replation,
-		storage:    storage,
-		isStart:    false,
-		logger:     logger,
+		RpcPort:        options.RpcPort,
+		ClientPort:     options.ClintPort,
+		HttpPrefix:     options.HttpPrefix,
+		election:       election,
+		replation:      replation,
+		storage:        storage,
+		isStart:        false,
+		logger:         logger,
+		members:        options.Members,
+		rpcClientCache: rpcClientCache,
 	}
 }
 
 func (g *Goraft) Start() error {
+	if err := g.startRpc(); err != nil {
+		return err
+	}
+
+	for _, member := range g.members.GetMembers() {
+		if err := g.rpcClientCache.AddRpcClient(member); err != nil {
+			g.logger.Fatal(fmt.Sprintf("addRpcClientCache failed,member:%v,Error:%s", member, err.Error()))
+		}
+	}
+
 	if err := g.election.Start(); err != nil {
 		return err
 	}
+
 	if err := g.replation.Start(); err != nil {
 		return err
 	}
+
+	g.isStart = true
 
 	if err := g.startHttp(); err != nil {
 		return err
@@ -58,6 +75,10 @@ func (g *Goraft) Start() error {
 }
 
 func (g *Goraft) Stop() error {
+	if !g.isStart {
+		return nil
+	}
+
 	if err := g.replation.Stop(); err != nil {
 		return err
 	}
