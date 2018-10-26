@@ -120,13 +120,17 @@ func (g *Goraft) startHttp() error {
 }
 
 func (g *Goraft) startRpc() error {
+	g.logger.Debug("enter startRpc")
 	rpc.Register(g.election)
 	rpc.Register(g.replation)
 	rpc.HandleHTTP()
+	g.logger.Debug("after handleHttp")
 	l, err := net.Listen("tcp", fmt.Sprintf(":%s", g.RpcPort))
 	if err != nil {
 		g.logger.Fatal("listen error:%s", err.Error())
 	}
+	g.logger.Debug("get listern address:", l)
 	go http.Serve(l, nil)
+	g.logger.Debug("after http.Serve")
 	return nil
 }
