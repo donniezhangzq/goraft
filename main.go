@@ -56,7 +56,6 @@ func main() {
 }
 
 func (p *program) Init(env svc.Environment) error {
-	p.logger.Debug(fmt.Sprintf("is win service? %v\n", env.IsWindowsService()))
 	return nil
 }
 

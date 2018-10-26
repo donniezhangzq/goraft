@@ -3,6 +3,7 @@ package goraft
 import (
 	"donniezhangzq/goraft/constant"
 	"donniezhangzq/goraft/log"
+	"fmt"
 	"math/rand"
 	"net/rpc"
 	"sync"
@@ -46,6 +47,7 @@ func NewElection(options *Options, logger *log.Logger, rpcclientCache *RpcClient
 }
 
 func (e *Election) start() error {
+	e.logger.Debug("enter election start")
 	//start a election
 	e.contestMut.Lock()
 	e.contest()
@@ -88,42 +90,19 @@ func (e *Election) getRandMinToMax(min int64, max int64) int64 {
 	return min + int64(float64(max-min)*randf)
 }
 
-//vote for candidate
-func (e *Election) Vote(args *RpcElectionReqArgs, response *RpcElectionResponse) error {
-	e.logger.Debug("receive vote rpc request.args:%v", args)
-	response.Term = args.Term
-	response.VoteGranted = false
-	if args.Term < e.replation.getCurrentTerm() {
-		//not grant vote
-		return nil
-	}
-	//follower will deny its vote if its own log is more up-do-date
-	if args.LastLogTerm < e.replation.getLastLogTerm() || args.LastLogIndex < e.replation.getLastLogIndex() {
-		//not grant vote
-		return nil
-	}
-	if e.getVoteFor() == "" || e.getVoteFor() == args.CandidateId {
-		//grant vote
-		response.VoteGranted = true
-		e.setVoteFor(args.CandidateId)
-	} else {
-		//not grant vote
-		return nil
-	}
-	return nil
-}
-
 func (e *Election) requestForVote(id string, client *rpc.Client, response *RpcElectionResponse) {
-	e.logger.Debug("prepare to send vote request")
+	e.logger.Debug(fmt.Sprintf("id:%s, client:%v prepare to send vote request", id, client))
 	var args = new(RpcElectionReqArgs)
 	args.CandidateId = e.commonInfo.Id
 	args.Term = e.replation.getCurrentTerm()
 	args.LastLogIndex = e.replation.getLastLogIndex()
 	args.LastLogTerm = e.replation.getLastLogTerm()
+	e.logger.Debug("args is:", args)
 	//todo async call vote
 	if err := client.Call(constant.RpcVote, args, response); err != nil {
 		e.logger.Warn("request vote from id:%s failed,Error:%s", id, err.Error())
 	}
+	e.logger.Debug(fmt.Sprintf("complete request vote,response is %v", response))
 }
 
 func (e *Election) contest() {
@@ -195,4 +174,35 @@ func (e *Election) monitorHearbeatLost() {
 		case <-ticker.C:
 		}
 	}
+}
+
+//vote for candidate
+func (e *Election) Vote(args *RpcElectionReqArgs, response *RpcElectionResponse) error {
+	e.logger.Debug("receive vote rpc request.args:%v", args)
+	response.Term = args.Term
+	response.VoteGranted = false
+
+	e.logger.Debug("getVotefor for is:", e.getVoteFor())
+	e.logger.Debug("currentTerm is:", e.replation.currentTerm)
+
+	if args.Term < e.replation.getCurrentTerm() {
+		//not grant vote
+		e.logger.Debug("not grant vote, term error")
+		return nil
+	}
+	//follower will deny its vote if its own log is more up-do-date
+	if args.LastLogTerm < e.replation.getLastLogTerm() || args.LastLogIndex < e.replation.getLastLogIndex() {
+		//not grant vote
+		e.logger.Debug("not grant vote, log error")
+		return nil
+	}
+	if e.getVoteFor() == "" || e.getVoteFor() == args.CandidateId {
+		//grant vote
+		e.logger.Debug("grant vote")
+		response.VoteGranted = true
+		e.setVoteFor(args.CandidateId)
+		e.logger.Debug("grant vote response is", response)
+	}
+	e.logger.Debug("response is", response)
+	return nil
 }

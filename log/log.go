@@ -75,7 +75,7 @@ func (l *Logger) SetLevel(level logr.Level) {
 	l.logger.Level = level
 }
 
-func (l *Logger) SetDefaultField(role constant.ElectionState, id string, leader string) {
+func (l *Logger) SetDefaultField(role, id, leader string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.entry = l.entry.WithFields(logr.Fields{
