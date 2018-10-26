@@ -125,7 +125,7 @@ func (g *Goraft) startRpc() error {
 	rpc.Register(g.replation)
 	rpc.HandleHTTP()
 	g.logger.Debug("after handleHttp")
-	l, err := net.Listen("tcp", fmt.Sprintf(":%s", g.RpcPort))
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", g.RpcPort))
 	if err != nil {
 		g.logger.Fatal("listen error:%s", err.Error())
 	}
